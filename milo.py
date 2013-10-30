@@ -501,21 +501,18 @@ def compute_ss(name, item):
 if __name__ == "__main__":
     with open(sys.argv[1]) as f:
         for line in f:
-            names = line.strip().split(';')[0].split(',')
-            items = line.strip().split(';')[1].split(',')
+            names, items = [half.split(',') for half in line.strip().split(';')]
             dic = collections.defaultdict(list)
             profit_matrix = []
             for name in names:
-                row = []
-                for item in items:
-                    row.append(compute_ss(name, item))
-                profit_matrix.append(row)
+                profit_matrix.append([compute_ss(name, item) for item in items])
             m = Munkres()
-            cost_matrix = make_cost_matrix(profit_matrix, lambda x: 1e10 - x)
+            cost_matrix = make_cost_matrix(profit_matrix, lambda x: - x)
             indexes = m.compute(cost_matrix)
-            total = 0
+            total = 0.0
             for row, column in indexes:
                 value = profit_matrix[row][column]
-                # print '(%.2f, %.2f) -> %.2f' % (row, column, value)
                 total += value
             print "%.2f"%total
+    sys.exit(0)
+
