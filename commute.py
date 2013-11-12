@@ -2,9 +2,6 @@
 import re, sys, math
 import itertools
 
-# def solve_tsp(coordinates):
-#     distances = []
-
 reference_distance_matrix = {(37.77688, -122.3911496): 5, (37.7860105, -122.4025377): 2, (37.7821494, -122.405896): 3, (37.7768016, -122.4169151): 1, (37.7689269, -122.4029053): 4, (37.7706628, -122.4040139): 6}
 
 def pairwise(iterable):
@@ -49,8 +46,6 @@ def calculate_distance(path, distances):
         >>> calculate_distance([1, 3, 2, 5, 6, 4] , distance_matrix(reference_distance_matrix)) > calculate_distance([1, 3, 2, 5, 4, 6] , distance_matrix(reference_distance_matrix))
         True
     """
-    # print [distances[a-1][b-1] for a,b in pairwise(path)]
-
     return sum(distances[a-1][b-1] for a,b in pairwise(path))
 
 def naive_solve_tsp(coordinates):
@@ -58,6 +53,46 @@ def naive_solve_tsp(coordinates):
     path, length = min( [ (t, calculate_distance(t, distances)) for t in itertools.permutations(range(1, len(coordinates)+1)) if t[0] == 1 ], key = lambda x: x[1] )
     for node in path:
         print node
+
+def solve_tsp_dynamic_my(distances):
+    """
+    >>> solve_tsp_dynamic_my([\
+        [0, 2, 9, 10],\
+        [1, 0, 6, 4],\
+        [15, 7, 0, 8],\
+        [6, 3, 12, 0]])
+    1
+    3
+    4
+    2
+    """
+    dots = set(range(1, len(distances)))
+    g = {}
+    #calculate initial distances
+    for k in range(1, len(distances)):
+        g[(k, frozenset())] = distances[k][0]
+
+    p = {}
+    optimal_path = [1]
+
+    for j in range(1, len(distances)):
+        for path in itertools.combinations(range(1, len(distances)), j):
+            subset = dots-set(path)
+            for l in subset:
+                g[(l, frozenset(path))], node = min([(distances[l][k] + g[(k, frozenset(set(path)-{k}))], k) for k in path], key = lambda x: x[0])
+                p[(l, frozenset(path))] = node+1
+
+    optimal, node = min([(distances[0][k] + g[(k, frozenset(dots-{k}))], k) for k in path], key = lambda x: x[0])
+    optimal_path.append(node+1)
+
+    dots = dots - {node}
+    # pritn p
+    while dots:
+        optimal_path.append(p[(node, frozenset(dots))])
+        dots = dots - {p[(node, frozenset(dots))]-1}
+
+    for p in optimal_path:
+        print p
 
 if __name__ == "__main__":
     coordinates = {}
@@ -67,6 +102,7 @@ if __name__ == "__main__":
             coords = eval(re.findall(r'\(.*\)', rest)[0])
             coordinates[coords] = int(num)
 
-    # print coordinates
-    naive_solve_tsp(coordinates)
-    # solve_tsp_dynamic((1,2))
+    solve_tsp_dynamic_my(distance_matrix(coordinates))
+    # naive_solve_tsp(coordinates)
+
+    sys.exit(0)
