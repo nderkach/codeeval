@@ -1,43 +1,53 @@
 #!/usr/bin/python
 
 import sys
+import unittest
 
-#recursive O(2**n) solution
-def lcsRec(x, y):
-    if x and y:
-        xa, xb = x[:-1], x[-1]
-        ya, yb = y[:-1], y[-1]
-        # check if strings have a common last character
-        if xb == yb:
-            return lcsRec(xa, ya) + xb
-        else:
-            return max(lcsRec(xa, y), lcsRec(x, ya), key=len)
-    else:
-        # basecase, check if one if the strings is null
+
+def lcs_helper(s1, s2):
+    m, n = len(s1), len(s2)
+    C = [[0 for i in range(n+1)] for j in range(m+1)]
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            if s1[i-1] == s2[j-1]:
+                C[i][j] = C[i-1][j-1] + 1
+            else:
+                C[i][j] = max(C[i][j-1], C[i-1][j])
+    return (C, int(C[m][n]))
+
+
+def backtrack(C, s1, s2, i, j):
+    if (i == 0 or j == 0):
         return ""
+    elif s1[i-1] == s2[j-1]:
+        return backtrack(C, s1, s2, i-1, j-1) + s1[i-1]
+    else:
+        if C[i][j-1] > C[i-1][j]:
+            return backtrack(C, s1, s2, i, j-1)
+        else:
+            return backtrack(C, s1, s2, i-1, j)
 
-def lcs(str):
-    # test for empty line
-    if not str.strip():
-        return False        
-    l = str.split(';')
-    # test for the correct string format
-    assert len(l) == 2
 
-    s1, s2 = l
-    if not 0 < (len(s1) or len(s2)) < 50:
-        return False;
+def lcs_dynamic(string):
+    s1, s2 = string.split(';')
+    assert(0 < (len(s1) or len(s2)) < 50)
+    C = lcs_helper(s1, s2)[0]
+    return backtrack(C, s1, s2, len(s1), len(s2))
 
-    return lcsRec(s1, s2)
+
+class Test(unittest.TestCase):
+    def test_cases(self):
+        self.assertEqual(lcs_helper("XMJYAUZ", "MZJAWXU")[1], 4)
+        self.assertEqual(lcs_helper("GAC", "AGCAT")[1], 2)
+        self.assertEqual(lcs_dynamic("GAC;AGCAT"), "GA")
+        self.assertEqual(lcs_dynamic("AGCAMT;GACRM"), "ACM")
+        self.assertEqual(lcs_dynamic("ABCDEFG;BCDGK"), "BCDG")
 
 if __name__ == "__main__":
     if (len(sys.argv) != 2):
-        print "Usage: ./lcs.py [input_file]"
-        print "Input file should contain two strings per line, semicolon delimited."
-        sys.exit()
-    file = open(sys.argv[1], 'r')
-    for line in file.read().splitlines():
-        res = lcs(line)
-        if (res):
-			print res
-
+        unittest.main()
+    with open(sys.argv[1], 'r') as f:
+        for line in f:
+            if line.strip():
+                res = lcs_dynamic(line.strip())
+                print(res)
